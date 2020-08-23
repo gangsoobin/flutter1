@@ -13,8 +13,11 @@ class MyApp extends StatelessWidget { // default stable widget
   Widget build(BuildContext context) { // draw UI
     //final wordPair = WordPair.random(); // wordPair from english_words
     return MaterialApp( // make app using MaterialApp what google's default design
-      title: '001261 app',
-      home: RandomWords()/*
+        title: '001261 app',
+        theme: ThemeData(
+          primaryColor: Colors.white,
+        ),
+        home: RandomWords()/*
       home: Scaffold( // default material layout
         appBar: AppBar( // for make app layout
           title: Text('Welcome to Flutter'), // app title
@@ -43,6 +46,7 @@ class RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[]; // array, WordPair data type
   // final can't modify, delete, but can add element
   // const can't modify, delete, add
+  final _saved = Set<WordPair>();
   final _biggerFont = const TextStyle(fontSize: 18.0);
   //final wordPair = WordPair.random();
   @override
@@ -50,6 +54,9 @@ class RandomWordsState extends State<RandomWords> {
     return Scaffold(
       appBar: AppBar(
         title: Text('startup Name Generator'),
+        actions: [
+          IconButton(icon: Icon(Icons.list), onPressed: _pushSaved),
+        ]
       ),
       body: _buildSuggestions(),
     );
@@ -70,12 +77,56 @@ class RandomWordsState extends State<RandomWords> {
     );
   }
   Widget _buildRow(WordPair pair) {
+    final bool alreadySaved = _saved.contains(pair);
     return ListTile( // https://medium.com/@suragch/a-complete-guide-to-flutters-listtile-597a20a3d449
       title: Text(
         pair.asPascalCase, // string, get WordPair and UpperCamel
         style: _biggerFont, // set style
       ),
+      trailing: Icon(
+        alreadySaved ? Icons.favorite : Icons.favorite_border,
+        color: alreadySaved ? Colors.red : null,
+      ),
+      onTap: () {
+        setState(() { // refresh display
+          if(alreadySaved) {
+            _saved.remove(pair);
+          } else {
+            _saved.add(pair);
+          }
+        });
+      }
     );
   }
-  //return Text(wordPair.asPascalCase);
+
+  void _pushSaved() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) {
+          final tiles = _saved.map(
+            (WordPair pair) {
+              return ListTile(
+                title: Text(
+                  pair.asPascalCase,
+                  style: _biggerFont,
+                ),
+              );
+            },
+          );
+          final divided = ListTile.divideTiles(
+            context: context,
+            tiles: tiles,
+          ).toList();
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('Saved Suggestions'),
+            ),
+            body: ListView(children: divided),
+          );
+        },
+      ),
+    );
+  }
+//return Text(wordPair.asPascalCase);
 }
